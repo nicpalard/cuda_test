@@ -43,8 +43,7 @@ __global__ void simple_conv(float* in_data, float* out_data, uint width, uint he
   out_data[idx_x + idx_y * width] = sum / mask_sum;
 }
 
-
-float* gpu_conv(float* image, uint width, uint height, float* mask, uint mask_width, uint mask_height, bool debug)
+float* gpu_conv(float* image, uint width, uint height, float* mask, uint mask_width, uint mask_height, float& exec_time)
 {
   uint size = width * height;
   float* out_image = new float[size];
@@ -79,12 +78,7 @@ float* gpu_conv(float* image, uint width, uint height, float* mask, uint mask_wi
   gpuErrchk( cudaMemcpy(out_image, d_out, size * sizeof(float), cudaMemcpyDeviceToHost) );
 
   cudaEventSynchronize(stop);
-  float milliseconds = 0;
-  cudaEventElapsedTime(&milliseconds, start, stop);
-
-  if (debug) {
-	std::cout << width << " x " << height << "\t" << (size * sizeof(float)) / 1e6 << "\t\t" << milliseconds << "\t\t" << (size * sizeof(float)) / 1e6 / (milliseconds / 1e3) << std::endl;
-  }
+  cudaEventElapsedTime(&exec_time, start, stop);
   
   gpuErrchk( cudaFree(d_in) );
   gpuErrchk( cudaFree(d_out) );

@@ -7,6 +7,22 @@
 #include <stdexcept>
 #include <string>
 
+inline float* create_gaussian_kernel(float sigma, size_t kernel_size)
+{
+    float* kernel = new float[kernel_size * kernel_size];
+    float mean = kernel_size/2;
+    float sum = 0.0;
+    for (int i = 0; i < kernel_size * kernel_size; ++i) 
+    {
+        int x = i % kernel_size;
+        int y = (i - x) / kernel_size % kernel_size;
+        kernel[i] = exp( -0.5 * (pow((x-mean)/sigma, 2.0) + pow((y-mean)/sigma,2.0)) ) / (2 * M_PI * sigma * sigma);
+        // Accumulate the kernel values
+        sum += kernel[i];
+    }
+    return kernel;
+}
+
 inline void print_array(float* array , uint size)
 {
   for (uint y = 0 ; y < size ; ++y)
@@ -129,16 +145,5 @@ inline float* generate_random_image(uint width, uint height)
   }
   return img;
 }
-
-
-
-
-
-
-
-
-
-
-
 
 #endif

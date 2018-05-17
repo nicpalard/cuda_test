@@ -2,20 +2,22 @@ EXEC = conv
 NVCC = nvcc
 NVCCFLAGS = -std=c++11 -arch=sm_50
 
+all: $(EXEC) bench
+
 $(EXEC): conv_gpu.o main.o
-	$(NVCC) $(NVCCFLAGS) *.o -o $@
+	$(NVCC) $(NVCCFLAGS) $^ -o $@
 
 bench: conv_gpu.o bench.o
-	$(NVCC) $(NVCCFLAGS) *.o -o $@
+	$(NVCC) $(NVCCFLAGS) $^ -o $@
 
-main.o: main.cpp
-	$(CC) -std=c++11 -o $@  -c -I. $<
+main.o: src/main.cpp
+	$(CC) -std=c++11 -o $@  -c -Iinclude/ $<
 
-bench.o : bench.cpp
-	$(CC) -std=c++11 -o $@  -c -I. $<
+bench.o: src/bench.cpp
+	$(CC) -std=c++11 -o $@  -c -Iinclude/ $<
 
-conv_gpu.o: conv_gpu.cu
-	$(NVCC) $(NVCCFLAGS) -I. $^ -dc
+conv_gpu.o: src/conv_gpu.cu
+	$(NVCC) $(NVCCFLAGS) -Iinclude $^ -dc
 
 clean:
 	rm -f *.o
