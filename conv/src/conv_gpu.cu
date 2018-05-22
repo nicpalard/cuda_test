@@ -43,18 +43,25 @@ __global__ void simple_conv(float* in_data, float* out_data, uint width, uint he
   out_data[idx_x + idx_y * width] = sum / mask_sum;
 }
 
-float* gpu_conv(float* image, uint width, uint height, float* mask, uint mask_width, uint mask_height, float& exec_time)
+float* gpu_conv(float* image, uint width, uint height, float* mask, uint mask_width, uint mask_height, struct benchmark& bench)
 {
   uint size = width * height;
   float* out_image = new float[size];
   
   uint mask_size = mask_width * mask_height;
+
+
+  cudaEvent_t total_start, transfer_start, compute_start, total_stop, transfer_stop, compute_stop;
+  cudaEventCreate(&total_start); cudaEventCreate(&transfer_start); cudaEventCreate(&compute_start);
+  cudaEventCreate(&total_stop); cudaEventCreate(&transfer_stop); cudaEventCreate(&compute_stop);
   
+  cudaEventRecord(total_start);
   float *d_in, *d_out, *d_mask;
   gpuErrchk( cudaMalloc((void**) &d_in, size * sizeof(float)) );
   gpuErrchk( cudaMalloc((void**) &d_out, size * sizeof(float)) );
   gpuErrchk( cudaMalloc((void**) &d_mask, mask_size * sizeof(float)) );
 
+  cudaEventRecord(transfer_start);
   gpuErrchk( cudaMemcpy(d_in, image, size * sizeof(float), cudaMemcpyHostToDevice) );
   gpuErrchk( cudaMemcpy(d_mask, mask, mask_size * sizeof(float), cudaMemcpyHostToDevice) );
 
@@ -66,19 +73,23 @@ float* gpu_conv(float* image, uint width, uint height, float* mask, uint mask_wi
   const dim3 blockDim(dim, dim);
   const dim3 numBlocks(width/dim, height/dim);
 
-  cudaEvent_t start, stop;
-  cudaEventCreate(&start);
-  cudaEventCreate(&stop);
-
-  cudaEventRecord(start);
-  simple_conv<<<numBlocks, blockDim>>>(d_in, d_out, width, height,
-									   d_mask, mask_width, mask_height);
-  cudaEventRecord(stop);
+  cudaEventRecord(compute_start);
+  simple_conv<<<numBlocks, blockDim>>>(d_in, d_out, width, height, d_mask, mask_width, mask_height);
+  cudaEventRecord(compute_stop);
 
   gpuErrchk( cudaMemcpy(out_image, d_out, size * sizeof(float), cudaMemcpyDeviceToHost) );
+  cudaEventRecord(transfer_stop);
+  cudaEventRecord(total_stop);
 
-  cudaEventSynchronize(stop);
-  cudaEventElapsedTime(&exec_time, start, stop);
+  cudaEventSynchronize(total_stop);
+  float compute_time, transfer_time, total_time;
+  cudaEventElapsedTime(&compute_time, compute_start, compute_stop);
+  cudaEventElapsedTime(&transfer_time, transfer_start, transfer_stop);
+  cudaEventElapsedTime(&total_time, total_start, total_stop);
+
+  bench.compute_time = compute_time;
+  bench.transfer_time = transfer_time;
+  bench.total_time = total_time;
   
   gpuErrchk( cudaFree(d_in) );
   gpuErrchk( cudaFree(d_out) );

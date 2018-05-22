@@ -7,6 +7,12 @@
 #include <stdexcept>
 #include <string>
 
+struct benchmark {
+    float compute_time;
+    float transfer_time;
+    float total_time;
+};
+
 inline float* create_gaussian_kernel(float sigma, size_t kernel_size)
 {
     float* kernel = new float[kernel_size * kernel_size];

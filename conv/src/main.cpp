@@ -23,8 +23,8 @@ int main(int argc, char** argv)
   uint c_height = 5;
   float* mask = create_gaussian_kernel(15, c_width * c_height);
 
-  float exec_time = 0;
-  float* out_image = gpu_conv(f_data, width, height, mask, c_width, c_height, exec_time);
+  struct benchmark benchmark;
+  float* out_image = gpu_conv(f_data, width, height, mask, c_width, c_height, benchmark);
 
   unsigned char* new_data_gray = float_to_uchar(out_image, width * height);
   unsigned char* data_color = gray_to_rgb(new_data_gray, width, height);
