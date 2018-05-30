@@ -4,7 +4,7 @@
 #include <math.h>
 
 #include "conv.h"
-#include "conv_common.h"
+#include "ImageUtils.hpp"
 
 int main(int argc, char** argv)
 {
